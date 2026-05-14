@@ -260,6 +260,9 @@ const SESSIONS = {
   '2026-03-26':{module:'Service Design Studio',    c:'module-blue',  ip:true},
   '2026-04-30':{module:'Service Design Studio',    c:'module-blue',  ip:true},
   '2026-05-21':{module:'Major Project Proposal',   c:'module-green', ip:true},
+  '2026-05-28':{module:'Major Project Proposal',   c:'module-green', ip:false},
+  '2026-06-04':{module:'Major Project Proposal',   c:'module-green', ip:false},
+  '2026-06-11':{module:'Major Project Proposal',   c:'module-green', ip:false},
   '2026-06-18':{module:'Major Project Proposal',   c:'module-green', ip:true},
   // ── Year 2 · T1 (Autumn 2026) ───────────────────────────
   '2026-09-17':{module:'Strategic Design for Change', c:'module-green', ip:true},
@@ -306,6 +309,8 @@ const fmtKey = d => {
   return `${y}-${m}-${day}`;
 };
 const fmtNice = d => d.toLocaleDateString('en-IE',{weekday:'long',day:'numeric',month:'long'});
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const fmtShort = d => `${DAYS[d.getDay()]} ${d.getDate()} ${MONTH_NAMES[d.getMonth()]}`;
 const parseKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y,m-1,d); };
 
 const upcomingTuesday = (from) => {
@@ -386,8 +391,8 @@ function renderCollege(){
     halfA.classList.add(s.c);
     if(!s.ip) halfA.classList.add('online');
     labelA.textContent = s.module;
-    whenEl.textContent = 'Today · ' + (s.ip ? 'in person' : 'online');
-    dateEl.textContent = fmtNice(today);
+    whenEl.textContent = fmtShort(today);
+    dateEl.textContent = s.ip ? 'In Person' : 'Online';
     return;
   }
 
@@ -395,7 +400,7 @@ function renderCollege(){
   if(upcoming.length === 0){
     halfA.classList.add('no-college');
     labelA.textContent = 'No college';
-    whenEl.textContent = 'No more sessions';
+    whenEl.textContent = '';
     dateEl.textContent = '';
     return;
   }
@@ -409,15 +414,12 @@ function renderCollege(){
     halfA.classList.add(s.c);
     if(!s.ip) halfA.classList.add('online');
     labelA.textContent = s.module;
-    whenEl.textContent = 'Tomorrow · ' + (s.ip ? 'in person' : 'online');
-    dateEl.textContent = fmtNice(nextDate);
   } else {
     halfA.classList.add('no-college');
     labelA.textContent = 'No college';
-    const daysWord = diffDays === 1 ? 'day' : 'days';
-    whenEl.textContent = `${s.module} in ${diffDays} ${daysWord} · ` + (s.ip ? 'in person' : 'online');
-    dateEl.textContent = fmtNice(nextDate);
   }
+  whenEl.textContent = fmtShort(nextDate);
+  dateEl.textContent = s.ip ? 'In Person' : 'Online';
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
