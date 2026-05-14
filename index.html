@@ -143,8 +143,13 @@
     color:#fff;
   }
   .grid .d.in-person{background:var(--in-person);color:#0e0e0e}
-  .grid .d.module-green{background:#8ec78e;color:#0e0e0e}
-  .grid .d.module-blue{background:#7aa3e0;color:#0e0e0e}
+  .grid .d.module-green{background:#8ec78e;color:#0e0e0e;position:relative}
+  .grid .d.module-blue{background:#7aa3e0;color:#0e0e0e;position:relative}
+  .grid .d.module-green::after,
+  .grid .d.module-blue::after{
+    content:'';width:5px;height:5px;border-radius:50%;
+    background:#f5c000;position:absolute;top:3px;right:3px;
+  }
   .grid .d.today{outline:2px solid #0e0e0e;outline-offset:1px}
   .grid .d.skipped{color:#bbb;text-decoration:line-through}
 
@@ -217,8 +222,8 @@
     <button class="close" data-close="college">Close</button>
   </header>
   <div class="legend">
-    <span><i style="background:#8ec78e"></i> Design Practices / Major Project</span>
-    <span><i style="background:#7aa3e0"></i> Service Design Studio</span>
+    <span><i style="background:#8ec78e"></i> Design Practices · Major Project · Design Capstone 1</span>
+    <span><i style="background:#7aa3e0"></i> Service Design Studio · Collaborative Design Studio</span>
   </div>
   <div id="collegeMonths"></div>
 </div>
@@ -248,13 +253,22 @@ const TUESDAYS = {
 
 // Each in-person Thursday with its module
 const SESSIONS = {
+  // Year 1
   '2026-01-22':{module:'Design Practices', colourClass:'module-green'},
   '2026-02-12':{module:'Design Practices', colourClass:'module-green'},
   '2026-03-05':{module:'Service Design Studio', colourClass:'module-blue'},
   '2026-03-26':{module:'Service Design Studio', colourClass:'module-blue'},
   '2026-04-30':{module:'Service Design Studio', colourClass:'module-blue'},
   '2026-05-21':{module:'Major Project Proposal', colourClass:'module-green'},
-  '2026-06-18':{module:'Major Project Proposal', colourClass:'module-green'}
+  '2026-06-18':{module:'Major Project Proposal', colourClass:'module-green'},
+  // Year 2 — T2
+  '2026-01-29':{module:'Collaborative Design Studio', colourClass:'module-blue'},
+  '2026-02-26':{module:'Collaborative Design Studio', colourClass:'module-blue'},
+  '2026-05-07':{module:'Design Capstone 1', colourClass:'module-green'},
+  // Year 2 — T3
+  '2026-06-04':{module:'Major Project', colourClass:'module-green'},
+  '2026-07-09':{module:'Major Project', colourClass:'module-green'},
+  '2026-08-20':{module:'Major Project', colourClass:'module-green'},
 };
 const IN_PERSON = new Set(Object.keys(SESSIONS));
 
@@ -411,7 +425,7 @@ function buildCollegeCalendar(){
   const today = new Date(); today.setHours(0,0,0,0);
   const todayKey = fmtKey(today);
   const monthsToShow = [];
-  for(let m=0; m<=7; m++) monthsToShow.push({year:2026, month:m}); // Jan–Aug 2026
+  for(let m=0; m<=7; m++) monthsToShow.push({year:2026, month:m}); // Jan–Aug 2026 (covers Y1 + Y2 T3)
 
   let html = '';
   for(const {year, month} of monthsToShow){
