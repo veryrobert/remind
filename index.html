@@ -54,6 +54,8 @@
   .half.no-college{background:#e8e8e8;color:#666}
   .half.module-green{background:#8ec78e;color:#0e0e0e}
   .half.module-blue{background:#7aa3e0;color:#0e0e0e}
+  .half.module-green.online{background:#d4ebd4;color:#444}
+  .half.module-blue.online{background:#ccddf5;color:#444}
 
   .label{
     font-size:clamp(40px,12vw,84px);
@@ -134,7 +136,7 @@
   .grid .d{
     aspect-ratio:1;display:flex;align-items:center;justify-content:center;
     border-radius:4px;font-size:13px;color:#0e0e0e;
-    font-feature-settings:"lnum";
+    font-feature-settings:"lnum";position:relative;
   }
   .grid .d.empty{visibility:hidden}
   .grid .d.refuse{background:var(--refuse);color:#fff}
@@ -143,13 +145,10 @@
     color:#fff;
   }
   .grid .d.in-person{background:var(--in-person);color:#0e0e0e}
-  .grid .d.module-green{background:#8ec78e;color:#0e0e0e;position:relative}
-  .grid .d.module-blue{background:#7aa3e0;color:#0e0e0e;position:relative}
-  .grid .d.module-green::after,
-  .grid .d.module-blue::after{
-    content:'';width:5px;height:5px;border-radius:50%;
-    background:#f5c000;position:absolute;top:3px;right:3px;
-  }
+  .grid .d.module-green{background:#8ec78e;color:#0e0e0e}
+  .grid .d.module-blue{background:#7aa3e0;color:#0e0e0e}
+  .grid .d.online{opacity:0.4}
+  .ip-dot{width:5px;height:5px;border-radius:50%;background:#f5c000;position:absolute;top:3px;right:3px}
   .grid .d.today{outline:2px solid #0e0e0e;outline-offset:1px}
   .grid .d.skipped{color:#bbb;text-decoration:line-through}
 
@@ -218,12 +217,13 @@
 
 <div class="drawer" id="collegeDrawer">
   <header>
-    <h1>College Year 1</h1>
+    <h1>College</h1>
     <button class="close" data-close="college">Close</button>
   </header>
   <div class="legend">
-    <span><i style="background:#8ec78e"></i> Design Practices · Major Project · Design Capstone 1</span>
-    <span><i style="background:#7aa3e0"></i> Service Design Studio · Collaborative Design Studio</span>
+    <span><i style="background:#8ec78e"></i> Green modules</span>
+    <span><i style="background:#7aa3e0"></i> Blue modules</span>
+    <span><i style="background:#f5c000;border-radius:50%"></i> In person</span>
   </div>
   <div id="collegeMonths"></div>
 </div>
@@ -251,26 +251,53 @@ const TUESDAYS = {
   '2026-12-01':'recycling-organic','2026-12-08':'refuse','2026-12-15':'recycling-organic','2026-12-22':'refuse','2026-12-29':'recycling-organic'
 };
 
-// Each in-person Thursday with its module
+// ip:true = in person (yellow dot), ip:false = online
 const SESSIONS = {
-  // Year 1
-  '2026-01-22':{module:'Design Practices', colourClass:'module-green'},
-  '2026-02-12':{module:'Design Practices', colourClass:'module-green'},
-  '2026-03-05':{module:'Service Design Studio', colourClass:'module-blue'},
-  '2026-03-26':{module:'Service Design Studio', colourClass:'module-blue'},
-  '2026-04-30':{module:'Service Design Studio', colourClass:'module-blue'},
-  '2026-05-21':{module:'Major Project Proposal', colourClass:'module-green'},
-  '2026-06-18':{module:'Major Project Proposal', colourClass:'module-green'},
-  // Year 2 — T2
-  '2026-01-29':{module:'Collaborative Design Studio', colourClass:'module-blue'},
-  '2026-02-26':{module:'Collaborative Design Studio', colourClass:'module-blue'},
-  '2026-05-07':{module:'Design Capstone 1', colourClass:'module-green'},
-  // Year 2 — T3
-  '2026-06-04':{module:'Major Project', colourClass:'module-green'},
-  '2026-07-09':{module:'Major Project', colourClass:'module-green'},
-  '2026-08-20':{module:'Major Project', colourClass:'module-green'},
+  // ── Year 1 ──────────────────────────────────────────────
+  '2026-01-22':{module:'Design Practices',         c:'module-green', ip:true},
+  '2026-02-12':{module:'Design Practices',         c:'module-green', ip:true},
+  '2026-03-05':{module:'Service Design Studio',    c:'module-blue',  ip:true},
+  '2026-03-26':{module:'Service Design Studio',    c:'module-blue',  ip:true},
+  '2026-04-30':{module:'Service Design Studio',    c:'module-blue',  ip:true},
+  '2026-05-21':{module:'Major Project Proposal',   c:'module-green', ip:true},
+  '2026-06-18':{module:'Major Project Proposal',   c:'module-green', ip:true},
+  // ── Year 2 · T1 (Autumn 2026) ───────────────────────────
+  '2026-09-17':{module:'Strategic Design for Change', c:'module-green', ip:true},
+  '2026-09-24':{module:'Strategic Design for Change', c:'module-green', ip:false},
+  '2026-10-08':{module:'Strategic Design for Change', c:'module-green', ip:false},
+  '2026-10-15':{module:'Strategic Design for Change', c:'module-green', ip:true},
+  '2026-11-05':{module:'Design Collab 1',             c:'module-blue',  ip:true},
+  '2026-11-12':{module:'Strategic Design for Change', c:'module-green', ip:false},
+  '2026-11-19':{module:'Strategic Design for Change', c:'module-green', ip:false},
+  '2026-11-26':{module:'Strategic Design for Change', c:'module-green', ip:true},
+  '2026-12-03':{module:'Strategic Design for Change', c:'module-green', ip:false},
+  '2026-12-17':{module:'Strategic Design for Change', c:'module-green', ip:true},
+  // ── Year 2 · T2 (Spring 2027) ───────────────────────────
+  '2027-01-28':{module:'Collaborative Design Studio', c:'module-blue',  ip:true},
+  '2027-02-04':{module:'Collaborative Design Studio', c:'module-blue',  ip:false},
+  '2027-02-11':{module:'Design Capstone 1',           c:'module-green', ip:false},
+  '2027-02-18':{module:'Collaborative Design Studio', c:'module-blue',  ip:false},
+  '2027-02-25':{module:'Collaborative Design Studio', c:'module-blue',  ip:true},
+  '2027-03-04':{module:'Collaborative Design Studio', c:'module-blue',  ip:false},
+  '2027-03-11':{module:'Collaborative Design Studio', c:'module-blue',  ip:false},
+  '2027-03-18':{module:'Collaborative Design Studio', c:'module-blue',  ip:false},
+  '2027-03-25':{module:'Collaborative Design Studio', c:'module-blue',  ip:true},
+  '2027-04-22':{module:'Design Capstone 1',           c:'module-green', ip:false},
+  '2027-04-29':{module:'Design Capstone 1',           c:'module-green', ip:false},
+  '2027-05-06':{module:'Design Capstone 1',           c:'module-green', ip:true},
+  // ── Year 2 · T3 (Summer 2027) ───────────────────────────
+  '2027-05-20':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-05-27':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-06-03':{module:'Major Project',               c:'module-green', ip:true},
+  '2027-06-10':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-06-17':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-06-24':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-07-08':{module:'Major Project',               c:'module-green', ip:true},
+  '2027-07-22':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-07-29':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-08-05':{module:'Major Project',               c:'module-green', ip:false},
+  '2027-08-19':{module:'Major Project',               c:'module-green', ip:true},
 };
-const IN_PERSON = new Set(Object.keys(SESSIONS));
 
 const fmtKey = d => {
   const y = d.getFullYear();
@@ -344,26 +371,27 @@ function renderBins(){
 function renderCollege(){
   const today = new Date(); today.setHours(0,0,0,0);
   const todayKey = fmtKey(today);
-  const upcoming = [...IN_PERSON].filter(k => parseKey(k) >= today).sort();
 
   const halfA = document.getElementById('collegeHalfA');
   const labelA = document.getElementById('collegeLabelA');
   const stage = document.getElementById('collegeStage');
   halfA.className = 'half';
-  halfA.removeAttribute('style');
   stage.classList.add('single');
 
   const whenEl = document.getElementById('collegeWhen');
   const dateEl = document.getElementById('collegeDate');
 
-  if(IN_PERSON.has(todayKey)){
+  if(SESSIONS[todayKey]){
     const s = SESSIONS[todayKey];
-    halfA.classList.add(s.colourClass);
+    halfA.classList.add(s.c);
+    if(!s.ip) halfA.classList.add('online');
     labelA.textContent = s.module;
-    whenEl.textContent = 'Today · in person';
+    whenEl.textContent = 'Today · ' + (s.ip ? 'in person' : 'online');
     dateEl.textContent = fmtNice(today);
     return;
   }
+
+  const upcoming = Object.keys(SESSIONS).filter(k => parseKey(k) > today).sort();
   if(upcoming.length === 0){
     halfA.classList.add('no-college');
     labelA.textContent = 'No college';
@@ -371,22 +399,25 @@ function renderCollege(){
     dateEl.textContent = '';
     return;
   }
+
   const nextKey = upcoming[0];
   const nextDate = parseKey(nextKey);
   const diffDays = Math.round((nextDate - today) / 86400000);
   const s = SESSIONS[nextKey];
 
   if(diffDays === 1){
-    halfA.classList.add(s.colourClass);
+    halfA.classList.add(s.c);
+    if(!s.ip) halfA.classList.add('online');
     labelA.textContent = s.module;
-    whenEl.textContent = 'Tomorrow · in person';
+    whenEl.textContent = 'Tomorrow · ' + (s.ip ? 'in person' : 'online');
+    dateEl.textContent = fmtNice(nextDate);
   } else {
     halfA.classList.add('no-college');
     labelA.textContent = 'No college';
     const daysWord = diffDays === 1 ? 'day' : 'days';
-    whenEl.textContent = `${s.module} in ${diffDays} ${daysWord}`;
+    whenEl.textContent = `${s.module} in ${diffDays} ${daysWord} · ` + (s.ip ? 'in person' : 'online');
+    dateEl.textContent = fmtNice(nextDate);
   }
-  dateEl.textContent = fmtNice(nextDate);
 }
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -425,7 +456,8 @@ function buildCollegeCalendar(){
   const today = new Date(); today.setHours(0,0,0,0);
   const todayKey = fmtKey(today);
   const monthsToShow = [];
-  for(let m=0; m<=7; m++) monthsToShow.push({year:2026, month:m}); // Jan–Aug 2026 (covers Y1 + Y2 T3)
+  for(let m=0; m<12; m++) monthsToShow.push({year:2026, month:m}); // Jan–Dec 2026
+  for(let m=0; m<=7; m++) monthsToShow.push({year:2027, month:m}); // Jan–Aug 2027
 
   let html = '';
   for(const {year, month} of monthsToShow){
@@ -438,11 +470,12 @@ function buildCollegeCalendar(){
     for(let day=1; day<=daysIn; day++){
       const d = new Date(year, month, day);
       const key = fmtKey(d);
-      const session = SESSIONS[key];
+      const s = SESSIONS[key];
       const cls = ['d'];
-      if(session) cls.push(session.colourClass);
+      if(s){ cls.push(s.c); if(!s.ip) cls.push('online'); }
       if(key === todayKey) cls.push('today');
-      html += `<div class="${cls.join(' ')}">${day}</div>`;
+      const dot = s && s.ip ? '<span class="ip-dot"></span>' : '';
+      html += `<div class="${cls.join(' ')}">${day}${dot}</div>`;
     }
     html += `</div></div>`;
   }
