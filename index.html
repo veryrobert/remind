@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Reminders</title>
+<style>
+  :root{
+    color-scheme: light only;
+    --refuse:#3a8d3a;
+    --recycling:#a8c0d0;
+    --organic:#7a4a2a;
+    --in-person:#e89a2a;
+    --remote:#1f1f1f;
+    --none:#1a1a1a;
+    --ink:#0e0e0e;
+    --ink-light:#fafafa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;overflow:hidden;font-family:ui-serif,Georgia,'Times New Roman',serif;-webkit-font-smoothing:antialiased}
+  body{background:#1a1a1a;color:var(--ink);overscroll-behavior:none}
+
+  .carousel{
+    display:flex;
+    width:100%;
+    height:100%;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .carousel::-webkit-scrollbar{display:none}
+  .screen{
+    flex:0 0 100%;
+    width:100%;
+    height:100%;
+    scroll-snap-align:start;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stage{position:absolute;inset:0;display:flex;flex-direction:column}
+  .half{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;transition:background-color .4s ease}
+  .half.refuse{background:var(--refuse);color:var(--ink-light)}
+  .half.recycling{background:var(--recycling);color:var(--ink)}
+  .half.organic{background:var(--organic);color:var(--ink-light)}
+  .half.in-person{background:var(--in-person);color:var(--ink)}
+  .half.remote{background:var(--remote);color:var(--ink-light)}
+  .half.none{background:var(--none);color:var(--ink-light)}
+  .half.no-college{background:#e8e8e8;color:#666}
+  .half.module-green{background:#8ec78e;color:#0e0e0e}
+  .half.module-blue{background:#7aa3e0;color:#0e0e0e}
+
+  .label{
+    font-size:clamp(40px,12vw,84px);
+    font-weight:400;
+    letter-spacing:-0.02em;
+    line-height:0.95;
+    text-align:center;
+    font-feature-settings:"lnum";
+  }
+  .stage.single .half:first-child{flex:1}
+  .stage.single .half:last-child{display:none}
+
+  .meta{
+    position:absolute;
+    top:max(20px,env(safe-area-inset-top));
+    left:24px;
+    right:24px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    font-size:13px;
+    letter-spacing:0.02em;
+    font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    z-index:10;
+    line-height:1;
+  }
+  .meta .when{opacity:0.7;margin-top:4px}
+  .meta button{
+    appearance:none;border:0;background:transparent;color:inherit;
+    font:inherit;letter-spacing:inherit;padding:0 0 0 12px;cursor:pointer;
+    opacity:0.7;line-height:1;
+  }
+
+  .dots{
+    position:fixed;
+    bottom:max(20px,env(safe-area-inset-bottom));
+    left:0;right:0;
+    display:flex;justify-content:center;gap:8px;
+    z-index:30;pointer-events:none;
+  }
+  .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:#fff;opacity:0.3;
+    transition:opacity .2s;
+    mix-blend-mode:difference;
+  }
+  .dot.active{opacity:0.9}
+
+  .drawer{
+    position:fixed;inset:0;background:#fafafa;color:#0e0e0e;
+    transform:translateY(100%);transition:transform .3s ease;
+    z-index:40;overflow-y:auto;
+    padding:max(20px,env(safe-area-inset-top)) 0 max(40px,env(safe-area-inset-bottom));
+  }
+  .drawer.open{transform:translateY(0)}
+  .drawer header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 24px 24px;
+  }
+  .drawer h1{font-weight:400;font-size:24px;letter-spacing:-0.01em}
+  .drawer .close{
+    appearance:none;border:0;background:transparent;font:inherit;
+    font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px;
+    cursor:pointer;padding:0 0 0 12px;color:#0e0e0e;line-height:1;
+  }
+  .month{padding:0 24px 28px}
+  .month h2{
+    font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;
+    font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    margin-bottom:10px;color:#666;
+  }
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .grid .dh{
+    font-size:10px;text-align:center;color:#999;
+    font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    padding-bottom:4px;
+  }
+  .grid .d{
+    aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+    border-radius:4px;font-size:13px;color:#0e0e0e;
+    font-feature-settings:"lnum";
+  }
+  .grid .d.empty{visibility:hidden}
+  .grid .d.refuse{background:var(--refuse);color:#fff}
+  .grid .d.recycling-organic{
+    background:linear-gradient(to bottom, var(--recycling) 50%, var(--organic) 50%);
+    color:#fff;
+  }
+  .grid .d.in-person{background:var(--in-person);color:#0e0e0e}
+  .grid .d.module-green{background:#8ec78e;color:#0e0e0e}
+  .grid .d.module-blue{background:#7aa3e0;color:#0e0e0e}
+  .grid .d.today{outline:2px solid #0e0e0e;outline-offset:1px}
+  .grid .d.skipped{color:#bbb;text-decoration:line-through}
+
+  .legend{
+    display:flex;gap:14px;padding:0 24px 24px;
+    font-size:11px;font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    color:#666;flex-wrap:wrap;
+  }
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .legend i.r{background:var(--refuse)}
+  .legend i.b{background:var(--recycling)}
+  .legend i.o{background:var(--organic)}
+  .legend i.p{background:var(--in-person)}
+</style>
+</head>
+<body>
+
+<div class="carousel" id="carousel">
+  <section class="screen" data-screen="bins">
+    <div class="stage single" id="binsStage">
+      <div class="meta">
+        <div>
+          <div id="binsWhen">Loading…</div>
+          <div class="when" id="binsDate"></div>
+        </div>
+        <button data-drawer="bins">Calendar</button>
+      </div>
+      <div class="half refuse" id="binsHalfA"><div class="label" id="binsLabelA">Bins</div></div>
+      <div class="half" id="binsHalfB"><div class="label" id="binsLabelB"></div></div>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="college">
+    <div class="stage single" id="collegeStage">
+      <div class="meta">
+        <div>
+          <div id="collegeWhen">Loading…</div>
+          <div class="when" id="collegeDate"></div>
+        </div>
+        <button data-drawer="college">Calendar</button>
+      </div>
+      <div class="half no-college" id="collegeHalfA"><div class="label" id="collegeLabelA">College</div></div>
+      <div class="half"></div>
+    </div>
+  </section>
+</div>
+
+<div class="dots" id="dots">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+</div>
+
+<div class="drawer" id="binsDrawer">
+  <header>
+    <h1>Bins 2026</h1>
+    <button class="close" data-close="bins">Close</button>
+  </header>
+  <div class="legend">
+    <span><i class="r"></i> Refuse</span>
+    <span><i class="b"></i> Recycling</span>
+    <span><i class="o"></i> Organic</span>
+  </div>
+  <div id="binsMonths"></div>
+</div>
+
+<div class="drawer" id="collegeDrawer">
+  <header>
+    <h1>College Year 1</h1>
+    <button class="close" data-close="college">Close</button>
+  </header>
+  <div class="legend">
+    <span><i style="background:#8ec78e"></i> Design Practices / Major Project</span>
+    <span><i style="background:#7aa3e0"></i> Service Design Studio</span>
+  </div>
+  <div id="collegeMonths"></div>
+</div>
+
+<div id="errBox" style="display:none;position:fixed;inset:0;background:#fff;color:#000;padding:24px;z-index:999;font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;overflow:auto"></div>
+
+<script>
+window.addEventListener('error', e => {
+  const box = document.getElementById('errBox');
+  if(box){ box.style.display = 'block'; box.textContent = 'Error: ' + e.message + '\nLine: ' + e.lineno + '\n' + (e.error && e.error.stack || ''); }
+});
+const HOLIDAY_SHIFTS = {'2026-03-17':'2026-03-14'};
+const TUESDAYS = {
+  '2026-01-06':'refuse','2026-01-13':'recycling-organic','2026-01-20':'refuse','2026-01-27':'recycling-organic',
+  '2026-02-03':'refuse','2026-02-10':'recycling-organic','2026-02-17':'refuse','2026-02-24':'recycling-organic',
+  '2026-03-03':'refuse','2026-03-10':'recycling-organic','2026-03-17':'refuse','2026-03-24':'recycling-organic','2026-03-31':'refuse',
+  '2026-04-07':'recycling-organic','2026-04-14':'refuse','2026-04-21':'recycling-organic','2026-04-28':'refuse',
+  '2026-05-05':'recycling-organic','2026-05-12':'refuse','2026-05-19':'recycling-organic','2026-05-26':'refuse',
+  '2026-06-02':'recycling-organic','2026-06-09':'refuse','2026-06-16':'recycling-organic','2026-06-23':'refuse','2026-06-30':'recycling-organic',
+  '2026-07-07':'refuse','2026-07-14':'recycling-organic','2026-07-21':'refuse','2026-07-28':'recycling-organic',
+  '2026-08-04':'refuse','2026-08-11':'recycling-organic','2026-08-18':'refuse','2026-08-25':'recycling-organic',
+  '2026-09-01':'refuse','2026-09-08':'recycling-organic','2026-09-15':'refuse','2026-09-22':'recycling-organic','2026-09-29':'refuse',
+  '2026-10-06':'recycling-organic','2026-10-13':'refuse','2026-10-20':'recycling-organic','2026-10-27':'refuse',
+  '2026-11-03':'recycling-organic','2026-11-10':'refuse','2026-11-17':'recycling-organic','2026-11-24':'refuse',
+  '2026-12-01':'recycling-organic','2026-12-08':'refuse','2026-12-15':'recycling-organic','2026-12-22':'refuse','2026-12-29':'recycling-organic'
+};
+
+// Each in-person Thursday with its module
+const SESSIONS = {
+  '2026-01-22':{module:'Design Practices', colourClass:'module-green'},
+  '2026-02-12':{module:'Design Practices', colourClass:'module-green'},
+  '2026-03-05':{module:'Service Design Studio', colourClass:'module-blue'},
+  '2026-03-26':{module:'Service Design Studio', colourClass:'module-blue'},
+  '2026-04-30':{module:'Service Design Studio', colourClass:'module-blue'},
+  '2026-05-21':{module:'Major Project Proposal', colourClass:'module-green'},
+  '2026-06-18':{module:'Major Project Proposal', colourClass:'module-green'}
+};
+const IN_PERSON = new Set(Object.keys(SESSIONS));
+
+const fmtKey = d => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+};
+const fmtNice = d => d.toLocaleDateString('en-IE',{weekday:'long',day:'numeric',month:'long'});
+const parseKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y,m-1,d); };
+
+const upcomingTuesday = (from) => {
+  const d = new Date(from); d.setHours(0,0,0,0);
+  const dow = d.getDay();
+  let add;
+  if(dow === 0) add = 2;
+  else if(dow === 1) add = 1;
+  else if(dow === 2) add = 0;
+  else add = 9 - dow;
+  d.setDate(d.getDate()+add);
+  return d;
+};
+
+function renderBins(){
+  const now = new Date();
+  const tue = upcomingTuesday(now);
+  const tueKey = fmtKey(tue);
+  const type = TUESDAYS[tueKey];
+  const actualKey = HOLIDAY_SHIFTS[tueKey] || tueKey;
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let displayDate = parseKey(actualKey);
+  let displayType = type;
+  if(displayDate < today){
+    const nextTue = new Date(tue); nextTue.setDate(nextTue.getDate()+7);
+    const nextKey = fmtKey(nextTue);
+    displayType = TUESDAYS[nextKey];
+    displayDate = HOLIDAY_SHIFTS[nextKey] ? parseKey(HOLIDAY_SHIFTS[nextKey]) : nextTue;
+  }
+
+  const diffDays = Math.round((displayDate - today) / 86400000);
+  const whenEl = document.getElementById('binsWhen');
+  if(diffDays === 0) whenEl.textContent = 'Today';
+  else if(diffDays === 1) whenEl.textContent = 'Tomorrow';
+  else whenEl.textContent = 'Next collection';
+  document.getElementById('binsDate').textContent = fmtNice(displayDate);
+
+  const stage = document.getElementById('binsStage');
+  const halfA = document.getElementById('binsHalfA');
+  const halfB = document.getElementById('binsHalfB');
+  halfA.className = 'half'; halfB.className = 'half';
+  stage.classList.remove('single');
+
+  if(!displayType){
+    stage.classList.add('single');
+    halfA.classList.add('none');
+    document.getElementById('binsLabelA').textContent = '—';
+    return;
+  }
+  if(displayType === 'refuse'){
+    stage.classList.add('single');
+    halfA.classList.add('refuse');
+    document.getElementById('binsLabelA').textContent = 'Refuse';
+  } else {
+    halfA.classList.add('recycling');
+    document.getElementById('binsLabelA').textContent = 'Recycling';
+    halfB.classList.add('organic');
+    document.getElementById('binsLabelB').textContent = 'Organic';
+  }
+}
+
+function renderCollege(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayKey = fmtKey(today);
+  const upcoming = [...IN_PERSON].filter(k => parseKey(k) >= today).sort();
+
+  const halfA = document.getElementById('collegeHalfA');
+  const labelA = document.getElementById('collegeLabelA');
+  const stage = document.getElementById('collegeStage');
+  halfA.className = 'half';
+  halfA.removeAttribute('style');
+  stage.classList.add('single');
+
+  const whenEl = document.getElementById('collegeWhen');
+  const dateEl = document.getElementById('collegeDate');
+
+  if(IN_PERSON.has(todayKey)){
+    const s = SESSIONS[todayKey];
+    halfA.classList.add(s.colourClass);
+    labelA.textContent = s.module;
+    whenEl.textContent = 'Today · in person';
+    dateEl.textContent = fmtNice(today);
+    return;
+  }
+  if(upcoming.length === 0){
+    halfA.classList.add('no-college');
+    labelA.textContent = 'No college';
+    whenEl.textContent = 'No more sessions';
+    dateEl.textContent = '';
+    return;
+  }
+  const nextKey = upcoming[0];
+  const nextDate = parseKey(nextKey);
+  const diffDays = Math.round((nextDate - today) / 86400000);
+  const s = SESSIONS[nextKey];
+
+  if(diffDays === 1){
+    halfA.classList.add(s.colourClass);
+    labelA.textContent = s.module;
+    whenEl.textContent = 'Tomorrow · in person';
+  } else {
+    halfA.classList.add('no-college');
+    labelA.textContent = 'No college';
+    const daysWord = diffDays === 1 ? 'day' : 'days';
+    whenEl.textContent = `${s.module} in ${diffDays} ${daysWord}`;
+  }
+  dateEl.textContent = fmtNice(nextDate);
+}
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function buildBinsCalendar(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayKey = fmtKey(today);
+  const collectionDates = {};
+  for(const [tueKey, type] of Object.entries(TUESDAYS)){
+    const actualKey = HOLIDAY_SHIFTS[tueKey] || tueKey;
+    collectionDates[actualKey] = type;
+  }
+  let html = '';
+  for(let m=0; m<12; m++){
+    const first = new Date(2026, m, 1);
+    const lead = first.getDay();
+    const daysIn = new Date(2026, m+1, 0).getDate();
+    html += `<div class="month"><h2>${MONTH_NAMES[m]}</h2><div class="grid">`;
+    for(const dh of ['S','M','T','W','T','F','S']) html += `<div class="dh">${dh}</div>`;
+    for(let i=0;i<lead;i++) html += `<div class="d empty"></div>`;
+    for(let day=1; day<=daysIn; day++){
+      const d = new Date(2026, m, day);
+      const key = fmtKey(d);
+      const cls = ['d'];
+      if(collectionDates[key]) cls.push(collectionDates[key]);
+      if(HOLIDAY_SHIFTS[key]) cls.push('skipped');
+      if(key === todayKey) cls.push('today');
+      html += `<div class="${cls.join(' ')}">${day}</div>`;
+    }
+    html += `</div></div>`;
+  }
+  document.getElementById('binsMonths').innerHTML = html;
+}
+
+function buildCollegeCalendar(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayKey = fmtKey(today);
+  const monthsToShow = [];
+  for(let m=0; m<=7; m++) monthsToShow.push({year:2026, month:m}); // Jan–Aug 2026
+
+  let html = '';
+  for(const {year, month} of monthsToShow){
+    const first = new Date(year, month, 1);
+    const lead = first.getDay();
+    const daysIn = new Date(year, month+1, 0).getDate();
+    html += `<div class="month"><h2>${MONTH_NAMES[month]} ${year}</h2><div class="grid">`;
+    for(const dh of ['S','M','T','W','T','F','S']) html += `<div class="dh">${dh}</div>`;
+    for(let i=0;i<lead;i++) html += `<div class="d empty"></div>`;
+    for(let day=1; day<=daysIn; day++){
+      const d = new Date(year, month, day);
+      const key = fmtKey(d);
+      const session = SESSIONS[key];
+      const cls = ['d'];
+      if(session) cls.push(session.colourClass);
+      if(key === todayKey) cls.push('today');
+      html += `<div class="${cls.join(' ')}">${day}</div>`;
+    }
+    html += `</div></div>`;
+  }
+  const el = document.getElementById('collegeMonths');
+  el.innerHTML = html;
+  el._monthsToShow = monthsToShow;
+}
+
+function openDrawer(name){
+  const drawer = document.getElementById(name+'Drawer');
+  drawer.classList.add('open');
+  const today = new Date();
+  if(name === 'bins'){
+    if(today.getFullYear() === 2026){
+      const target = document.getElementById('binsMonths').children[today.getMonth()];
+      if(target) requestAnimationFrame(() => target.scrollIntoView({block:'start'}));
+    }
+  } else if(name === 'college'){
+    const monthsEl = document.getElementById('collegeMonths');
+    const arr = monthsEl._monthsToShow || [];
+    const idx = arr.findIndex(x => x.year === today.getFullYear() && x.month === today.getMonth());
+    if(idx >= 0 && monthsEl.children[idx]){
+      requestAnimationFrame(() => monthsEl.children[idx].scrollIntoView({block:'start'}));
+    }
+  }
+}
+function closeDrawer(name){
+  document.getElementById(name+'Drawer').classList.remove('open');
+}
+document.querySelectorAll('[data-drawer]').forEach(btn => {
+  btn.addEventListener('click', () => openDrawer(btn.dataset.drawer));
+});
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeDrawer(btn.dataset.close));
+});
+
+const carousel = document.getElementById('carousel');
+const dots = document.querySelectorAll('.dot');
+let scrollTimer;
+carousel.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    const idx = Math.round(carousel.scrollLeft / carousel.clientWidth);
+    dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+  }, 30);
+});
+
+try {
+  renderBins();
+  renderCollege();
+  buildBinsCalendar();
+  buildCollegeCalendar();
+  setInterval(() => { renderBins(); renderCollege(); }, 60_000);
+} catch(err){
+  const box = document.getElementById('errBox');
+  if(box){ box.style.display = 'block'; box.textContent = 'Init error: ' + err.message + '\n' + err.stack; }
+}
+</script>
+</body>
+</html>
